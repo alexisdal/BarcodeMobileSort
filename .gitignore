@@ -1,5 +1,19 @@
 # thanks to https://gist.github.com/iainconnor/8605514
 
+#built application files
+*.apk
+*.ap_
+
+# files for the dex VM
+*.dex
+
+# Java class files
+*.class
+
+# generated files
+bin/
+gen/
+
 # Built application files
 /*/build/
 
