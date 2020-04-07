@@ -86,6 +86,19 @@ class MainActivity : AppCompatActivity() {
             .build()
         val imageAnalysis = ImageAnalysis(imageAnalysisConfig)
 
+        val qrCodeAnalyzer = BarCodeAnalyzer { barCodes ->
+            barCodes.forEach {
+                Log.d("MainActivity", "BarCode detected: ${it.rawValue}.")
+            }
+            if (barCodes.count() > 0) {
+                val intent: Intent = Intent(applicationContext, Put2ShelfActivity::class.java)
+                //intent.putExtra(Put2ShelfActivity.EAN_MSG, eanToSend)
+                intent.putExtra(Put2ShelfActivity.EAN_MSG, barCodes[0].rawValue)
+                startActivity(intent)
+            }
+        }
+
+        imageAnalysis.analyzer = qrCodeAnalyzer
 
         CameraX.bindToLifecycle(this as LifecycleOwner, preview, imageAnalysis)
     }
