@@ -23,8 +23,7 @@ class MainActivity : AppCompatActivity() {
     }
     private lateinit var textureView: TextureView
 
-    lateinit var sortButton: Button
-
+    @Volatile var acceptBarcode: Boolean = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,33 +37,13 @@ class MainActivity : AppCompatActivity() {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), REQUEST_CAMERA_PERMISSION)
         }
 
-        sortButton = findViewById<Button>(R.id.sortButton)
-        sortButton.setOnClickListener {
 
-            // change ean...
-            val r = Random.nextDouble()
-            var eanToSend:String ="123456"
-            if (r < 0.33333) {
-                eanToSend = "9782290215715"
-            } else if (r < 0.6666) {
-                eanToSend = "8076809574631"
-            }
-            //Log.d("TAG", "$r $eanToSend") // displayed each time the screen is shown
+    }
 
-            // Random.nextDouble() does create a value between 0 -> 1
-            //for (i in 0..100) {
-            //    val x = Random.nextDouble()
-            //    Log.d("TAG", "$x") // displayed each time the screen is shown
-            //}
-
-
-
-            val intent: Intent = Intent(applicationContext, Put2ShelfActivity::class.java)
-            intent.putExtra(Put2ShelfActivity.EAN_MSG, eanToSend)
-            startActivity(intent)
-
-        }
-
+    override fun onResume() {
+        super.onResume()
+        acceptBarcode = true
+        Log.d("TAG", "onResume()")
     }
 
     private fun startCamera() {
@@ -88,13 +67,14 @@ class MainActivity : AppCompatActivity() {
 
         val qrCodeAnalyzer = BarCodeAnalyzer { barCodes ->
             barCodes.forEach {
-                Log.d("MainActivity", "BarCode detected: ${it.rawValue}.")
+                Log.d("TAG", "BarCode detected: ${it.rawValue}. $acceptBarcode")
             }
-            if (barCodes.count() > 0) {
+            if (barCodes.count() > 0 && acceptBarcode) {
                 val intent: Intent = Intent(applicationContext, Put2ShelfActivity::class.java)
                 //intent.putExtra(Put2ShelfActivity.EAN_MSG, eanToSend)
                 intent.putExtra(Put2ShelfActivity.EAN_MSG, barCodes[0].rawValue)
                 startActivity(intent)
+                acceptBarcode = false
             }
         }
 
