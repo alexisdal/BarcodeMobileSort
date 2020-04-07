@@ -16,6 +16,12 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 
+// vibrate
+import android.content.Context
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.Build
+
 class MainActivity : AppCompatActivity() {
 
     companion object {
@@ -34,7 +40,7 @@ class MainActivity : AppCompatActivity() {
         if (isCameraPermissionGranted()) {
             textureView.post { startCamera() }
         } else {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), REQUEST_CAMERA_PERMISSION)
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA, Manifest.permission.VIBRATE), REQUEST_CAMERA_PERMISSION)
         }
 
 
@@ -75,6 +81,7 @@ class MainActivity : AppCompatActivity() {
                 intent.putExtra(Put2ShelfActivity.EAN_MSG, barCodes[0].rawValue)
                 startActivity(intent)
                 acceptBarcode = false
+                vibrate()
             }
         }
 
@@ -99,6 +106,35 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Extension property to check whether device has Vibrator
+    val Context.hasVibrator:Boolean
+        get() {
+            val vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            return vibrator.hasVibrator()
+        }
 
+    // Extension method to vibrate a phone programmatically
+    fun Context.vibrate(milliseconds:Long = 500){
+        val vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+        // Check whether device/hardware has a vibrator
+        val canVibrate:Boolean = vibrator.hasVibrator()
+
+        if(canVibrate){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                // void vibrate (VibrationEffect vibe)
+                vibrator.vibrate(
+                    VibrationEffect.createOneShot(
+                        milliseconds,
+                        // The default vibration strength of the device.
+                        VibrationEffect.DEFAULT_AMPLITUDE
+                    )
+                )
+            }else{
+                // This method was deprecated in API level 26
+                vibrator.vibrate(milliseconds)
+            }
+        }
+    }
 
 }
