@@ -1,26 +1,27 @@
 package com.example.barcodemobilesort
 
-import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import android.widget.Button
-import kotlin.random.Random
-import android.util.Log
+// vibrate
+
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioManager
+import android.media.ToneGenerator
+import android.os.Build
+import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.util.Log
 import android.view.TextureView
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 
-// vibrate
-import android.content.Context
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.Build
 
 class MainActivity : AppCompatActivity() {
 
@@ -81,7 +82,12 @@ class MainActivity : AppCompatActivity() {
                 intent.putExtra(Put2ShelfActivity.EAN_MSG, barCodes[0].rawValue)
                 startActivity(intent)
                 acceptBarcode = false
+                // vib
                 vibrate()
+                // beep
+                val toneGen1 = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+                toneGen1.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP, 150)
+                //toneGen1.startTone(ToneGenerator.TONE_PROP_BEEP, 150)
             }
         }
 
