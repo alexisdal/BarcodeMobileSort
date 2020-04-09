@@ -73,13 +73,15 @@ class MainActivity : AppCompatActivity() {
         val imageAnalysis = ImageAnalysis(imageAnalysisConfig)
 
         val qrCodeAnalyzer = BarCodeAnalyzer { barCodes ->
-            barCodes.forEach {
-                Log.d("TAG", "BarCode detected: ${it.rawValue}. $acceptBarcode")
-            }
+            //barCodes.forEach {
+            //    Log.d("TAG", "BarCode detected: ${it.rawValue}. $acceptBarcode")
+            //}
             if (barCodes.count() > 0 && acceptBarcode) {
+                val ean = barCodes[0].rawValue
+                Log.d("TAG", "BarCode detected: $ean")
                 val intent: Intent = Intent(applicationContext, Put2ShelfActivity::class.java)
                 //intent.putExtra(Put2ShelfActivity.EAN_MSG, eanToSend)
-                intent.putExtra(Put2ShelfActivity.EAN_MSG, barCodes[0].rawValue)
+                intent.putExtra(Put2ShelfActivity.EAN_MSG, ean)
                 startActivity(intent)
                 acceptBarcode = false
                 // vib
