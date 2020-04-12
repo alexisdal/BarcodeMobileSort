@@ -3,18 +3,17 @@ package com.example.barcodemobilesort
 // vibrate
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.AudioManager
-import android.media.ToneGenerator
-import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
+import android.os.SystemClock
 import android.util.Log
 import android.view.TextureView
 import android.view.ViewGroup
+import android.view.WindowManager
+import android.widget.Chronometer
+import android.widget.Chronometer.OnChronometerTickListener
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
@@ -23,18 +22,36 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 
 
+
 class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val REQUEST_CAMERA_PERMISSION = 10
+        const val SUCCESS_MSG="msg"
+        private var score = 0
     }
     private lateinit var textureView: TextureView
 
     @Volatile var acceptBarcode: Boolean = true
 
+    private lateinit var chrono: Chronometer
+    //private var running: Boolean = false
+    //private static var score: Int = 0
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); // disable scren timeout
+
+
+        val msg=intent.getStringExtra(SUCCESS_MSG)
+        if (msg == "SUCCESS") { MainActivity.score += 1 }
+
+
+        val t: TextView = findViewById(R.id.main_text_label)
+        t.text = "Score: ${MainActivity.score}"
+        Log.d("TAG", "score: ${MainActivity.score}")
 
         textureView = findViewById(R.id.texture_view)
         // Request camera permissions
@@ -43,7 +60,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA, Manifest.permission.VIBRATE), REQUEST_CAMERA_PERMISSION)
         }
-
 
     }
 
@@ -84,12 +100,6 @@ class MainActivity : AppCompatActivity() {
                 intent.putExtra(Put2ShelfActivity.EAN_MSG, ean)
                 startActivity(intent)
                 acceptBarcode = false
-                // vib
-                vibrate()
-                // beep
-                val toneGen1 = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
-                toneGen1.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP, 150)
-                //toneGen1.startTone(ToneGenerator.TONE_PROP_BEEP, 150)
             }
         }
 
@@ -114,35 +124,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Extension property to check whether device has Vibrator
-    val Context.hasVibrator:Boolean
-        get() {
-            val vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-            return vibrator.hasVibrator()
-        }
 
-    // Extension method to vibrate a phone programmatically
-    fun Context.vibrate(milliseconds:Long = 500){
-        val vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-
-        // Check whether device/hardware has a vibrator
-        val canVibrate:Boolean = vibrator.hasVibrator()
-
-        if(canVibrate){
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-                // void vibrate (VibrationEffect vibe)
-                vibrator.vibrate(
-                    VibrationEffect.createOneShot(
-                        milliseconds,
-                        // The default vibration strength of the device.
-                        VibrationEffect.DEFAULT_AMPLITUDE
-                    )
-                )
-            }else{
-                // This method was deprecated in API level 26
-                vibrator.vibrate(milliseconds)
-            }
-        }
-    }
 
 }

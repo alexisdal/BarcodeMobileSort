@@ -1,7 +1,10 @@
 package com.example.barcodemobilesort
 
-import android.graphics.drawable.Drawable
-import android.os.Bundle
+import android.content.Context
+import android.content.Intent
+import android.media.AudioManager
+import android.media.ToneGenerator
+import android.os.*
 import android.util.Log
 import android.widget.ImageView
 import android.widget.TextView
@@ -12,7 +15,7 @@ import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
-
+import kotlin.random.Random
 
 //$ curl http://192.168.1.200:8080/get_states
 //{"loc_6": 0, "loc_7": 0, "loc_4": 0, "loc_5": 1, "loc_2": 0, "loc_3": 0, "loc_0": 0, "loc_1": 1}
@@ -60,15 +63,20 @@ class Put2ShelfActivity : AppCompatActivity() {
         const val EAN_MSG="msg"
     }
 
+    var location : String = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_put2_shelf_activity)
 
+        resetUILocation()
         val msg=intent.getStringExtra(EAN_MSG)
         //tv_msg.text=msg
         //Log.d("TAG", "AZERTY") // displayed each time the screen is shown
         //Log.d("TAG", msg) // displayed each time the screen is shown
         this.setEAN(msg)
+
+
     }
 
     fun setEAN(ean: String) {
@@ -76,7 +84,8 @@ class Put2ShelfActivity : AppCompatActivity() {
         val tvDesc: TextView = findViewById<TextView>(R.id.textDescription)
         val iv: ImageView = findViewById<ImageView>(R.id.imageView)
         val desc = this.getDesc(ean)
-        var filename = "_$ean.png"
+        //var filename = "_$ean.png"
+
 
         tvDesc.text = "$desc\n\nEAN:$ean"
         if (desc == "unknown") { iv.setImageResource(R.drawable._unknown) }
@@ -116,37 +125,208 @@ class Put2ShelfActivity : AppCompatActivity() {
         else if (ean == "9782016253052") { iv.setImageResource(R.drawable._9782016253052) }
 
 
-        // https://android--code.blogspot.com/2015/08/android-imageview-set-image-from-assets.html
+        if (desc != "unknown") {
+            // OK
+            //vibrate()
+            vibratePredefined(VibrationEffect.EFFECT_TICK)
+            // see https://developer.android.com/reference/android/os/VibrationEffect
+            // beep
+            val toneGen1 = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+            toneGen1.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP, 150)
+            //toneGen1.startTone(ToneGenerator.TONE_PROP_BEEP, 150)
+        } else {
+            // UNKNOWN CODE
+            vibrate()
+            val toneGen1 = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+            toneGen1.startTone(ToneGenerator.TONE_CDMA_HIGH_PBX_SLS, 500)
 
+            // display message
+            //Toast.makeText( applicationContext,"unknown EAN\r\n\r\n", Toast.LENGTH_SHORT).show()
+
+            // go back to scan screen
+            Handler().postDelayed({
+                //Do something after 100ms
+                val intent: Intent = Intent(applicationContext, MainActivity::class.java)
+                startActivity(intent)
+            }, 2000)
+            return
+        }
+
+        // assign a location
+        location = getAssignedLocation()
+
+        // update UI with location
+        setUILocation(location)
+
+        // https://android--code.blogspot.com/2015/08/android-imageview-set-image-from-assets.html
+        callReset()
+
+    }
+
+    fun callReset(){
         val api = RestAPI()
-        /*
-        val mycall : Call<String> = api.reset()
+        val my_reset_call : Call<String> = api.reset()
         //val result = call.execute().body()   // will trigger a android.os.NetworkOnMainThreadException because using UI thread for network is baaaaaad :D
-        mycall.enqueue(object : Callback<String> {
+        my_reset_call.enqueue(object : Callback<String> {
             override fun onResponse(call: Call<String>, response: Response<String>) {
-                Log.d("TAG", response.body())
+                //Log.d("TAG", response.body())
+                callGetStates()
             }
             override fun onFailure(call: Call<String>, t: Throwable) {
-                Log.d("TAG", "ERROR: "+t.message.toString())
+                Log.d("TAG", "ERROR reset: "+t.message.toString())
             }
-
         })
-        */
+    }
+
+    fun callGetStates() {
+        val api = RestAPI()
         val mycall : Call<Map<String, Int>> = api.getStates()
         mycall.enqueue(object : Callback<Map<String, Int>> {
             override fun onFailure(call: Call<Map<String, Int>>, t: Throwable) {
-                Log.d("TAG", "ERROR: "+t.message.toString())
+                Log.d("TAG", "ERROR get_states: "+t.message.toString())
             }
 
             override fun onResponse(
                 call: Call<Map<String, Int>>,
                 response: Response<Map<String, Int>>
             ) {
-                Log.d("TAG", response.body().toString())
+                //Log.d("TAG", response.body().toString())
+                val r = response.body()
+                if (r != null) { handleGetStatesResponse(r) }
             }
         })
+    }
+
+    fun handleGetStatesResponse(response: Map<String, Int>) {
+        //val x = response.get("aaa")
+        //Log.d("TAG", "aaa: ${x}")
+        var sum = 0
+        var last_winner = ""
+        // https://mkyong.com/kotlin/kotlin-how-to-loop-a-map/
+        for ((k, v) in response) {
+            if (v > 0) {
+                sum += v
+                last_winner = k.toLowerCase()
+            }
+        }
+        var success = false
+        if(sum == 0) {
+            // ask again
+            Log.d("TAG", "nothing detected")
+            this.callGetStates()
+            return
+        } else if (sum == 1) {
+            // we have a single case selected
+            Log.d("TAG", "one cell. expected=${location}  observed=${last_winner}")
+            if (last_winner == this.location) {
+                success = true
+                this.setUILocationWin(last_winner)
+            } else { this.setUILocationLose(last_winner) }
+        } else {
+            // several cases ==> game lost
+            var msg: String = "observed: "
+            this.resetUILocation()
+            for ((k, v) in response) {
+                if (v >= 1) {
+                    this.setUILocationLose(k.toLowerCase())
+                    msg += "${k.toLowerCase()} "
+                }
+            }
+            Log.d("TAG", msg)
+        }
+
+        if (!success){
+            vibrate()
+            val toneGen1 = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+            toneGen1.startTone(ToneGenerator.TONE_CDMA_HIGH_PBX_SLS, 500)
+        }
+
+        // come back to main screen after 1s
+        Handler().postDelayed({
+            val intent: Intent = Intent(applicationContext, MainActivity::class.java)
+            if (success) { intent.putExtra(MainActivity.SUCCESS_MSG, "SUCCESS") }
+            startActivity(intent)
+        }, 1000)
+
 
     }
+
+    fun getAssignedLocation(): String {
+        val r = Random.nextDouble()
+        if       (r <= 1/10.0) { return "a1" }
+        else if  (r <= 2/10.0) { return "b1" }
+        else if  (r <= 3/10.0) { return "a2" }
+        else if  (r <= 4/10.0) { return "b2" }
+        else if  (r <= 5/10.0) { return "a3" }
+        else if  (r <= 6/10.0) { return "b3" }
+        else if  (r <= 7/10.0) { return "a4" }
+        else if  (r <= 8/10.0) { return "b4" }
+        else if  (r <= 9/10.0) { return "a5" }
+        return "b5"
+    }
+
+    fun resetUILocation() {
+        findViewById<TextView>(R.id.locA1).text = ""
+        findViewById<TextView>(R.id.locB1).text = ""
+        findViewById<TextView>(R.id.locA2).text = ""
+        findViewById<TextView>(R.id.locB2).text = ""
+        findViewById<TextView>(R.id.locA3).text = ""
+        findViewById<TextView>(R.id.locB3).text = ""
+        findViewById<TextView>(R.id.locA4).text = ""
+        findViewById<TextView>(R.id.locB4).text = ""
+        findViewById<TextView>(R.id.locA5).text = ""
+        findViewById<TextView>(R.id.locB5).text = ""
+
+        // reset all to gray
+        findViewById<TextView>(R.id.locA1).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locB1).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locA2).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locB2).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locA3).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locB3).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locA4).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locB4).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locA5).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locB5).setBackgroundResource(R.drawable.gray)
+    }
+
+    fun setUILocation(loc: String) {
+        if (loc == "a1")  { findViewById<TextView>(R.id.locA1).setBackgroundResource( R.drawable.white ) }
+        if (loc == "b1")  { findViewById<TextView>(R.id.locB1).setBackgroundResource( R.drawable.white ) }
+        if (loc == "a2")  { findViewById<TextView>(R.id.locA2).setBackgroundResource( R.drawable.white ) }
+        if (loc == "b2")  { findViewById<TextView>(R.id.locB2).setBackgroundResource( R.drawable.white ) }
+        if (loc == "a3")  { findViewById<TextView>(R.id.locA3).setBackgroundResource( R.drawable.white ) }
+        if (loc == "b3")  { findViewById<TextView>(R.id.locB3).setBackgroundResource( R.drawable.white ) }
+        if (loc == "a4")  { findViewById<TextView>(R.id.locA4).setBackgroundResource( R.drawable.white ) }
+        if (loc == "b4")  { findViewById<TextView>(R.id.locB4).setBackgroundResource( R.drawable.white ) }
+        if (loc == "a5")  { findViewById<TextView>(R.id.locA5).setBackgroundResource( R.drawable.white ) }
+        if (loc == "b5")  { findViewById<TextView>(R.id.locB5).setBackgroundResource( R.drawable.white ) }
+    }
+    fun setUILocationWin(loc: String) {
+        if (loc == "a1")  { findViewById<TextView>(R.id.locA1).setBackgroundResource( R.drawable.green ) }
+        if (loc == "b1")  { findViewById<TextView>(R.id.locB1).setBackgroundResource( R.drawable.green ) }
+        if (loc == "a2")  { findViewById<TextView>(R.id.locA2).setBackgroundResource( R.drawable.green ) }
+        if (loc == "b2")  { findViewById<TextView>(R.id.locB2).setBackgroundResource( R.drawable.green ) }
+        if (loc == "a3")  { findViewById<TextView>(R.id.locA3).setBackgroundResource( R.drawable.green ) }
+        if (loc == "b3")  { findViewById<TextView>(R.id.locB3).setBackgroundResource( R.drawable.green ) }
+        if (loc == "a4")  { findViewById<TextView>(R.id.locA4).setBackgroundResource( R.drawable.green ) }
+        if (loc == "b4")  { findViewById<TextView>(R.id.locB4).setBackgroundResource( R.drawable.green ) }
+        if (loc == "a5")  { findViewById<TextView>(R.id.locA5).setBackgroundResource( R.drawable.green ) }
+        if (loc == "b5")  { findViewById<TextView>(R.id.locB5).setBackgroundResource( R.drawable.green ) }
+    }
+    fun setUILocationLose(loc: String) {
+        if (loc == "a1")  { findViewById<TextView>(R.id.locA1).setBackgroundResource( R.drawable.red ) }
+        if (loc == "b1")  { findViewById<TextView>(R.id.locB1).setBackgroundResource( R.drawable.red ) }
+        if (loc == "a2")  { findViewById<TextView>(R.id.locA2).setBackgroundResource( R.drawable.red ) }
+        if (loc == "b2")  { findViewById<TextView>(R.id.locB2).setBackgroundResource( R.drawable.red ) }
+        if (loc == "a3")  { findViewById<TextView>(R.id.locA3).setBackgroundResource( R.drawable.red ) }
+        if (loc == "b3")  { findViewById<TextView>(R.id.locB3).setBackgroundResource( R.drawable.red ) }
+        if (loc == "a4")  { findViewById<TextView>(R.id.locA4).setBackgroundResource( R.drawable.red ) }
+        if (loc == "b4")  { findViewById<TextView>(R.id.locB4).setBackgroundResource( R.drawable.red ) }
+        if (loc == "a5")  { findViewById<TextView>(R.id.locA5).setBackgroundResource( R.drawable.red ) }
+        if (loc == "b5")  { findViewById<TextView>(R.id.locB5).setBackgroundResource( R.drawable.red ) }
+    }
+
 
     fun getDesc(ean: String) : String {
         var res = "unknown"
@@ -188,6 +368,55 @@ class Put2ShelfActivity : AppCompatActivity() {
 
         return res
     }
+    // Extension property to check whether device has Vibrator
+    val Context.hasVibrator:Boolean
+        get() {
+            val vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            return vibrator.hasVibrator()
+        }
 
+    // Extension method to vibrate a phone programmatically
+    fun Context.vibrate(milliseconds:Long = 500){
+        val vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+        // Check whether device/hardware has a vibrator
+        val canVibrate:Boolean = vibrator.hasVibrator()
+
+        if(canVibrate){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                // void vibrate (VibrationEffect vibe)
+                vibrator.vibrate(
+                    VibrationEffect.createOneShot(
+                        milliseconds,
+                        // The default vibration strength of the device.
+                        VibrationEffect.DEFAULT_AMPLITUDE
+                    )
+                )
+            }else{
+                // This method was deprecated in API level 26
+                vibrator.vibrate(milliseconds)
+            }
+        }
+    }
+
+
+    // Extension method to vibrate a phone programmatically
+    fun Context.vibratePredefined(effectId:Int = VibrationEffect.EFFECT_TICK ){
+        val vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+        // Check whether device/hardware has a vibrator
+        val canVibrate:Boolean = vibrator.hasVibrator()
+
+        if(canVibrate){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                vibrator.vibrate(
+                    VibrationEffect.createPredefined(effectId)
+                )
+            }else{
+                // This method was deprecated in API level 26
+                vibrator.vibrate(100)
+            }
+        }
+    }
 
 }
