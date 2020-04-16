@@ -5,6 +5,8 @@ package com.example.barcodemobilesort
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
@@ -52,6 +54,11 @@ class MainActivity : AppCompatActivity() {
         val t: TextView = findViewById(R.id.main_text_label)
         t.text = "Score: ${MainActivity.score}"
         Log.d("TAG", "score: ${MainActivity.score}")
+
+        if (MainActivity.score >= 38) {
+            val toneGen1 = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+            toneGen1.startTone(ToneGenerator.TONE_DTMF_7, 5000)
+        }
 
         textureView = findViewById(R.id.texture_view)
         // Request camera permissions
