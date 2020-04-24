@@ -12,17 +12,19 @@ import androidx.appcompat.app.AppCompatActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import retrofit2.http.GET
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.QueryMap
 import kotlin.random.Random
+
 
 //$ curl http://192.168.1.200:8080/get_states
 //{"loc_6": 0, "loc_7": 0, "loc_4": 0, "loc_5": 1, "loc_2": 0, "loc_3": 0, "loc_0": 0, "loc_1": 1}
 //$ curl http://192.168.1.200:8080/reset
 //OK
 
-interface MobileSortAPI {
+interface SortAPI {
     @GET("/get_states")
     fun getStates(): Call<Map<String, Int>>
 
@@ -30,30 +32,69 @@ interface MobileSortAPI {
     fun reset(): Call<String>
 }
 
-class RestAPI() {
+class SortWebservice() {
 
-    private val mobileSortAPI: MobileSortAPI
+    private val api: SortAPI
 
     init {
         val retrofit = Retrofit.Builder()
             .baseUrl("http://192.168.1.200:8080/")
-
             //.baseUrl("https://www.google.com/")
             .addConverterFactory(MoshiConverterFactory.create())
             .build()
 
-        mobileSortAPI = retrofit.create(MobileSortAPI::class.java)
+        api = retrofit.create(SortAPI::class.java)
     }
 
     fun getStates(): Call<Map<String, Int>> {
-        return mobileSortAPI.getStates()
+        return api.getStates()
     }
     fun reset(): Call<String> {
-        return mobileSortAPI.reset()
+        return api.reset()
     }
 }
 
+interface LightAPI {
+    //@GET("/c")
+    //fun setLightColor(@Query(value="colors", encoded=false) colors String?): Call<String>
+    //fun setLightColor(
+    //    @QueryMap(
+    //        value = "params",
+    //        encoded = false
+    //    ) params: String?
+    //): Call<String>
 
+    @GET("/c")
+    fun setLightColor(
+        @QueryMap options: Map<String?, String?>?
+    ): Call<String>
+
+
+    @GET("/x")
+    fun reset(): Call<String>
+}
+class LightWebservice() {
+
+    private val api: LightAPI
+
+    init {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://192.168.1.200:8081/")
+            //.baseUrl("https://www.google.com/")
+            .addConverterFactory(MoshiConverterFactory.create())
+            .build()
+
+        api = retrofit.create(LightAPI::class.java)
+    }
+
+    fun setLightColor(colors: Map<String?, String?>?): Call<String> {
+        //Log.d("TAG", "setLightColors:${colors}")
+        return api.setLightColor(colors)
+    }
+    fun reset(): Call<String> {
+        return api.reset()
+    }
+}
 
 
 class Put2ShelfActivity : AppCompatActivity() {
@@ -158,13 +199,22 @@ class Put2ShelfActivity : AppCompatActivity() {
         // update UI with location
         setUILocation(location)
 
+        // light up LEDs in white
+        //var colors: MutableMap<String, String> =  HashMap()
+        //val data: MutableMap<String, String> = HashMap()
+        //data["author"] = "Marcus"
+        //data["page"] = 2.toString()
+        //val colors = mapOf(location : "w")
+        val colors: Map<String?, String?>? = mapOf(location to  "w")
+        callSetLightColor(colors)
+
         // https://android--code.blogspot.com/2015/08/android-imageview-set-image-from-assets.html
-        callReset()
+        callResetSort()
 
     }
 
-    fun callReset(){
-        val api = RestAPI()
+    fun callResetSort(){
+        val api = SortWebservice()
         val my_reset_call : Call<String> = api.reset()
         //val result = call.execute().body()   // will trigger a android.os.NetworkOnMainThreadException because using UI thread for network is baaaaaad :D
         my_reset_call.enqueue(object : Callback<String> {
@@ -178,8 +228,9 @@ class Put2ShelfActivity : AppCompatActivity() {
         })
     }
 
+
     fun callGetStates() {
-        val api = RestAPI()
+        val api = SortWebservice()
         val mycall : Call<Map<String, Int>> = api.getStates()
         mycall.enqueue(object : Callback<Map<String, Int>> {
             override fun onFailure(call: Call<Map<String, Int>>, t: Throwable) {
@@ -196,6 +247,35 @@ class Put2ShelfActivity : AppCompatActivity() {
             }
         })
     }
+
+    fun callSetLightColor(colors: Map<String?, String?>?) {
+        val api = LightWebservice()
+        val mycall : Call<String> = api.setLightColor(colors)
+        mycall.enqueue(object : Callback<String> {
+            override fun onResponse(call: Call<String>, response: Response<String>) {
+                Log.d("TAG", "LED color:"+response.body())
+            }
+            override fun onFailure(call: Call<String>, t: Throwable) {
+                Log.d("TAG", "ERROR color: "+t.message.toString())
+            }
+        })
+
+    }
+
+    fun callResetLight(){
+        val api = LightWebservice()
+        val mycall : Call<String> = api.reset()
+        //val result = call.execute().body()   // will trigger a android.os.NetworkOnMainThreadException because using UI thread for network is baaaaaad :D
+        mycall.enqueue(object : Callback<String> {
+            override fun onResponse(call: Call<String>, response: Response<String>) {
+                Log.d("TAG", "LED reset:"+response.body())
+            }
+            override fun onFailure(call: Call<String>, t: Throwable) {
+                Log.d("TAG", "ERROR reset light: "+t.message.toString())
+            }
+        })
+    }
+
 
     fun handleGetStatesResponse(response: Map<String, Int>) {
         //val x = response.get("aaa")
@@ -221,17 +301,28 @@ class Put2ShelfActivity : AppCompatActivity() {
             if (last_winner == this.location) {
                 success = true
                 this.setUILocationWin(last_winner)
-            } else { this.setUILocationLose(last_winner) }
+                val colors: Map<String?, String?>? = mapOf(last_winner to  "g")
+                callSetLightColor(colors)
+            } else {
+                this.setUILocationLose(last_winner)
+                val colors: Map<String?, String?>? = mapOf(last_winner to  "r")
+                callSetLightColor(colors)
+            }
         } else {
             // several cases ==> game lost
             var msg: String = "observed: "
             this.resetUILocation()
+            val c: MutableMap<String, String> = HashMap()
+
             for ((k, v) in response) {
                 if (v >= 1) {
                     this.setUILocationLose(k.toLowerCase())
                     msg += "${k.toLowerCase()} "
+                    c[k.toLowerCase()] = "r"
                 }
             }
+            val colors: Map<String?, String?>? = c.toMap()
+            callSetLightColor(colors)
             Log.d("TAG", msg)
         }
 
@@ -243,6 +334,7 @@ class Put2ShelfActivity : AppCompatActivity() {
 
         // come back to main screen after 1s
         Handler().postDelayed({
+            callResetLight()
             val intent: Intent = Intent(applicationContext, MainActivity::class.java)
             if (success) { intent.putExtra(MainActivity.SUCCESS_MSG, "SUCCESS") }
             startActivity(intent)
