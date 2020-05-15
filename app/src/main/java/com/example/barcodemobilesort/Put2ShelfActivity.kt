@@ -38,8 +38,9 @@ class SortWebservice() {
 
     init {
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://192.168.1.200:8080/")
             //.baseUrl("https://www.google.com/")
+            //.baseUrl("http://192.168.1.200:8080/")
+            .baseUrl("http://10.155.195.46:8080/")
             .addConverterFactory(MoshiConverterFactory.create())
             .build()
 
@@ -79,8 +80,9 @@ class LightWebservice() {
 
     init {
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://192.168.1.200:8081/")
             //.baseUrl("https://www.google.com/")
+            //.baseUrl("http://192.168.1.200:8081/")
+            .baseUrl("http://10.155.195.46:8081/")
             .addConverterFactory(MoshiConverterFactory.create())
             .build()
 
@@ -120,52 +122,14 @@ class Put2ShelfActivity : AppCompatActivity() {
 
     }
 
-    fun setEAN(ean: String) {
+    fun setEAN(msg: String) {
 
         val tvDesc: TextView = findViewById<TextView>(R.id.textDescription)
-        val iv: ImageView = findViewById<ImageView>(R.id.imageView)
+        val ean = getEanRemoveDuplicates(msg)
         val desc = this.getDesc(ean)
-        //var filename = "_$ean.png"
 
-
-        tvDesc.text = "$desc\n\nEAN:$ean"
-        if (desc == "unknown") { iv.setImageResource(R.drawable._unknown) }
-        else if (ean == "8076809574631") { iv.setImageResource(R.drawable._8076809574631) }
-        else if (ean == "9782290215715") { iv.setImageResource(R.drawable._9782290215715) }
-        else if (ean == "3178530402988") { iv.setImageResource(R.drawable._3178530402988) }
-        else if (ean == "3596710469079") { iv.setImageResource(R.drawable._3596710469079) }
-        else if (ean == "3564707000086") { iv.setImageResource(R.drawable._3564707000086) }
-        else if (ean == "3606323172737") { iv.setImageResource(R.drawable._3606323172737) }
-        else if (ean == "7622210368997") { iv.setImageResource(R.drawable._7622210368997) }
-        else if (ean == "8722700027775") { iv.setImageResource(R.drawable._8722700027775) }
-        else if (ean == "3564700002872") { iv.setImageResource(R.drawable._3564700002872) }
-        else if (ean == "3564707079884") { iv.setImageResource(R.drawable._3564707079884) }
-        else if (ean == "8000320414855") { iv.setImageResource(R.drawable._8000320414855) }
-        else if (ean == "3564700755358") { iv.setImageResource(R.drawable._3564700755358) }
-        else if (ean == "3564700863305") { iv.setImageResource(R.drawable._3564700863305) }
-        else if (ean == "26045795")      { iv.setImageResource(R.drawable._26045795) }
-        else if (ean == "3564700001165") { iv.setImageResource(R.drawable._3564700001165) }
-        else if (ean == "3068320063003") { iv.setImageResource(R.drawable._3068320063003) }
-        else if (ean == "3038350013804") { iv.setImageResource(R.drawable._3038350013804) }
-        else if (ean == "3596710379194") { iv.setImageResource(R.drawable._3596710379194) }
-        else if (ean == "4002359006715") { iv.setImageResource(R.drawable._4002359006715) }
-        else if (ean == "8076808140325") { iv.setImageResource(R.drawable._8076808140325) }
-        else if (ean == "3275760000257") { iv.setImageResource(R.drawable._3275760000257) }
-        else if (ean == "3157623295454") { iv.setImageResource(R.drawable._3157623295454) }
-        else if (ean == "3259190368095") { iv.setImageResource(R.drawable._3259190368095) }
-        else if (ean == "5053083145705") { iv.setImageResource(R.drawable._5053083145705) }
-        else if (ean == "3606320000170") { iv.setImageResource(R.drawable._3606320000170) }
-        else if (ean == "3344428058166") { iv.setImageResource(R.drawable._3344428058166) }
-        else if (ean == "3606323144239") { iv.setImageResource(R.drawable._3606323144239) }
-        else if (ean == "3344428060909") { iv.setImageResource(R.drawable._3344428060909) }
-        else if (ean == "8717418170936") { iv.setImageResource(R.drawable._8717418170936) }
-        else if (ean == "9782016253373") { iv.setImageResource(R.drawable._9782016253373) }
-        else if (ean == "9782012708808") { iv.setImageResource(R.drawable._9782012708808) }
-        else if (ean == "9782014005196") { iv.setImageResource(R.drawable._9782014005196) }
-        else if (ean == "9782016253076") { iv.setImageResource(R.drawable._9782016253076) }
-        else if (ean == "9782016253052") { iv.setImageResource(R.drawable._9782016253052) }
-
-
+        tvDesc.text = "$desc\n\nEAN:$msg"
+        setEanImage(ean)
         if (desc != "unknown") {
             // OK
             //vibrate()
@@ -345,80 +309,205 @@ class Put2ShelfActivity : AppCompatActivity() {
 
     fun getAssignedLocation(): String {
         val r = Random.nextDouble()
-        if       (r <= 1/10.0) { return "a1" }
-        else if  (r <= 2/10.0) { return "b1" }
-        else if  (r <= 3/10.0) { return "a2" }
-        else if  (r <= 4/10.0) { return "b2" }
-        else if  (r <= 5/10.0) { return "a3" }
-        else if  (r <= 6/10.0) { return "b3" }
-        else if  (r <= 7/10.0) { return "a4" }
-        else if  (r <= 8/10.0) { return "b4" }
-        else if  (r <= 9/10.0) { return "a5" }
-        return "b5"
+        if       (r <=  1/20.0) { return "a1" }
+        else if  (r <=  2/20.0) { return "b1" }
+        else if  (r <=  3/20.0) { return "c1" }
+        else if  (r <=  4/20.0) { return "d1" }
+        else if  (r <=  5/20.0) { return "e1" }
+        else if  (r <=  6/20.0) { return "a2" }
+        else if  (r <=  7/20.0) { return "b2" }
+        else if  (r <=  8/20.0) { return "c2" }
+        else if  (r <=  9/20.0) { return "d2" }
+        else if  (r <= 10/20.0) { return "e2" }
+        else if  (r <= 11/20.0) { return "a3" }
+        else if  (r <= 12/20.0) { return "b3" }
+        else if  (r <= 13/20.0) { return "c3" }
+        else if  (r <= 14/20.0) { return "d3" }
+        else if  (r <= 15/20.0) { return "e3" }
+        else if  (r <= 16/20.0) { return "a4" }
+        else if  (r <= 17/20.0) { return "b4" }
+        else if  (r <= 18/20.0) { return "c4" }
+        else if  (r <= 19/20.0) { return "d4" }
+        return "e4"
     }
 
     fun resetUILocation() {
         findViewById<TextView>(R.id.locA1).text = ""
         findViewById<TextView>(R.id.locB1).text = ""
+        findViewById<TextView>(R.id.locC1).text = ""
+        findViewById<TextView>(R.id.locD1).text = ""
+        findViewById<TextView>(R.id.locE1).text = ""
         findViewById<TextView>(R.id.locA2).text = ""
         findViewById<TextView>(R.id.locB2).text = ""
+        findViewById<TextView>(R.id.locC2).text = ""
+        findViewById<TextView>(R.id.locD2).text = ""
+        findViewById<TextView>(R.id.locE2).text = ""
         findViewById<TextView>(R.id.locA3).text = ""
         findViewById<TextView>(R.id.locB3).text = ""
+        findViewById<TextView>(R.id.locC3).text = ""
+        findViewById<TextView>(R.id.locD3).text = ""
+        findViewById<TextView>(R.id.locE3).text = ""
         findViewById<TextView>(R.id.locA4).text = ""
         findViewById<TextView>(R.id.locB4).text = ""
-        findViewById<TextView>(R.id.locA5).text = ""
-        findViewById<TextView>(R.id.locB5).text = ""
+        findViewById<TextView>(R.id.locC4).text = ""
+        findViewById<TextView>(R.id.locD4).text = ""
+        findViewById<TextView>(R.id.locE4).text = ""
 
         // reset all to gray
         findViewById<TextView>(R.id.locA1).setBackgroundResource(R.drawable.gray)
         findViewById<TextView>(R.id.locB1).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locC1).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locD1).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locE1).setBackgroundResource(R.drawable.gray)
         findViewById<TextView>(R.id.locA2).setBackgroundResource(R.drawable.gray)
         findViewById<TextView>(R.id.locB2).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locC2).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locD2).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locE2).setBackgroundResource(R.drawable.gray)
         findViewById<TextView>(R.id.locA3).setBackgroundResource(R.drawable.gray)
         findViewById<TextView>(R.id.locB3).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locC3).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locD3).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locE3).setBackgroundResource(R.drawable.gray)
         findViewById<TextView>(R.id.locA4).setBackgroundResource(R.drawable.gray)
         findViewById<TextView>(R.id.locB4).setBackgroundResource(R.drawable.gray)
-        findViewById<TextView>(R.id.locA5).setBackgroundResource(R.drawable.gray)
-        findViewById<TextView>(R.id.locB5).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locC4).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locD4).setBackgroundResource(R.drawable.gray)
+        findViewById<TextView>(R.id.locE4).setBackgroundResource(R.drawable.gray)
     }
 
     fun setUILocation(loc: String) {
         if (loc == "a1")  { findViewById<TextView>(R.id.locA1).setBackgroundResource( R.drawable.white ) }
         if (loc == "b1")  { findViewById<TextView>(R.id.locB1).setBackgroundResource( R.drawable.white ) }
+        if (loc == "c1")  { findViewById<TextView>(R.id.locC1).setBackgroundResource( R.drawable.white ) }
+        if (loc == "d1")  { findViewById<TextView>(R.id.locD1).setBackgroundResource( R.drawable.white ) }
+        if (loc == "e1")  { findViewById<TextView>(R.id.locE1).setBackgroundResource( R.drawable.white ) }
         if (loc == "a2")  { findViewById<TextView>(R.id.locA2).setBackgroundResource( R.drawable.white ) }
         if (loc == "b2")  { findViewById<TextView>(R.id.locB2).setBackgroundResource( R.drawable.white ) }
+        if (loc == "c2")  { findViewById<TextView>(R.id.locC2).setBackgroundResource( R.drawable.white ) }
+        if (loc == "d2")  { findViewById<TextView>(R.id.locD2).setBackgroundResource( R.drawable.white ) }
+        if (loc == "e2")  { findViewById<TextView>(R.id.locE2).setBackgroundResource( R.drawable.white ) }
         if (loc == "a3")  { findViewById<TextView>(R.id.locA3).setBackgroundResource( R.drawable.white ) }
         if (loc == "b3")  { findViewById<TextView>(R.id.locB3).setBackgroundResource( R.drawable.white ) }
+        if (loc == "c3")  { findViewById<TextView>(R.id.locC3).setBackgroundResource( R.drawable.white ) }
+        if (loc == "d3")  { findViewById<TextView>(R.id.locD3).setBackgroundResource( R.drawable.white ) }
+        if (loc == "e3")  { findViewById<TextView>(R.id.locE3).setBackgroundResource( R.drawable.white ) }
         if (loc == "a4")  { findViewById<TextView>(R.id.locA4).setBackgroundResource( R.drawable.white ) }
         if (loc == "b4")  { findViewById<TextView>(R.id.locB4).setBackgroundResource( R.drawable.white ) }
-        if (loc == "a5")  { findViewById<TextView>(R.id.locA5).setBackgroundResource( R.drawable.white ) }
-        if (loc == "b5")  { findViewById<TextView>(R.id.locB5).setBackgroundResource( R.drawable.white ) }
+        if (loc == "c4")  { findViewById<TextView>(R.id.locC4).setBackgroundResource( R.drawable.white ) }
+        if (loc == "d4")  { findViewById<TextView>(R.id.locD4).setBackgroundResource( R.drawable.white ) }
+        if (loc == "e4")  { findViewById<TextView>(R.id.locE4).setBackgroundResource( R.drawable.white ) }
+
     }
     fun setUILocationWin(loc: String) {
         if (loc == "a1")  { findViewById<TextView>(R.id.locA1).setBackgroundResource( R.drawable.green ) }
         if (loc == "b1")  { findViewById<TextView>(R.id.locB1).setBackgroundResource( R.drawable.green ) }
+        if (loc == "c1")  { findViewById<TextView>(R.id.locC1).setBackgroundResource( R.drawable.green ) }
+        if (loc == "d1")  { findViewById<TextView>(R.id.locD1).setBackgroundResource( R.drawable.green ) }
+        if (loc == "e1")  { findViewById<TextView>(R.id.locE1).setBackgroundResource( R.drawable.green ) }
         if (loc == "a2")  { findViewById<TextView>(R.id.locA2).setBackgroundResource( R.drawable.green ) }
         if (loc == "b2")  { findViewById<TextView>(R.id.locB2).setBackgroundResource( R.drawable.green ) }
+        if (loc == "c2")  { findViewById<TextView>(R.id.locC2).setBackgroundResource( R.drawable.green ) }
+        if (loc == "d2")  { findViewById<TextView>(R.id.locD2).setBackgroundResource( R.drawable.green ) }
+        if (loc == "e2")  { findViewById<TextView>(R.id.locE2).setBackgroundResource( R.drawable.green ) }
         if (loc == "a3")  { findViewById<TextView>(R.id.locA3).setBackgroundResource( R.drawable.green ) }
         if (loc == "b3")  { findViewById<TextView>(R.id.locB3).setBackgroundResource( R.drawable.green ) }
+        if (loc == "c3")  { findViewById<TextView>(R.id.locC3).setBackgroundResource( R.drawable.green ) }
+        if (loc == "d3")  { findViewById<TextView>(R.id.locD3).setBackgroundResource( R.drawable.green ) }
+        if (loc == "e3")  { findViewById<TextView>(R.id.locE3).setBackgroundResource( R.drawable.green ) }
         if (loc == "a4")  { findViewById<TextView>(R.id.locA4).setBackgroundResource( R.drawable.green ) }
         if (loc == "b4")  { findViewById<TextView>(R.id.locB4).setBackgroundResource( R.drawable.green ) }
-        if (loc == "a5")  { findViewById<TextView>(R.id.locA5).setBackgroundResource( R.drawable.green ) }
-        if (loc == "b5")  { findViewById<TextView>(R.id.locB5).setBackgroundResource( R.drawable.green ) }
+        if (loc == "c4")  { findViewById<TextView>(R.id.locC4).setBackgroundResource( R.drawable.green ) }
+        if (loc == "d4")  { findViewById<TextView>(R.id.locD4).setBackgroundResource( R.drawable.green ) }
+        if (loc == "e4")  { findViewById<TextView>(R.id.locE4).setBackgroundResource( R.drawable.green ) }
+
     }
     fun setUILocationLose(loc: String) {
         if (loc == "a1")  { findViewById<TextView>(R.id.locA1).setBackgroundResource( R.drawable.red ) }
         if (loc == "b1")  { findViewById<TextView>(R.id.locB1).setBackgroundResource( R.drawable.red ) }
+        if (loc == "c1")  { findViewById<TextView>(R.id.locC1).setBackgroundResource( R.drawable.red ) }
+        if (loc == "d1")  { findViewById<TextView>(R.id.locD1).setBackgroundResource( R.drawable.red ) }
+        if (loc == "e1")  { findViewById<TextView>(R.id.locE1).setBackgroundResource( R.drawable.red ) }
         if (loc == "a2")  { findViewById<TextView>(R.id.locA2).setBackgroundResource( R.drawable.red ) }
         if (loc == "b2")  { findViewById<TextView>(R.id.locB2).setBackgroundResource( R.drawable.red ) }
+        if (loc == "c2")  { findViewById<TextView>(R.id.locC2).setBackgroundResource( R.drawable.red ) }
+        if (loc == "d2")  { findViewById<TextView>(R.id.locD2).setBackgroundResource( R.drawable.red ) }
+        if (loc == "e2")  { findViewById<TextView>(R.id.locE2).setBackgroundResource( R.drawable.red ) }
         if (loc == "a3")  { findViewById<TextView>(R.id.locA3).setBackgroundResource( R.drawable.red ) }
         if (loc == "b3")  { findViewById<TextView>(R.id.locB3).setBackgroundResource( R.drawable.red ) }
+        if (loc == "c3")  { findViewById<TextView>(R.id.locC3).setBackgroundResource( R.drawable.red ) }
+        if (loc == "d3")  { findViewById<TextView>(R.id.locD3).setBackgroundResource( R.drawable.red ) }
+        if (loc == "e3")  { findViewById<TextView>(R.id.locE3).setBackgroundResource( R.drawable.red ) }
         if (loc == "a4")  { findViewById<TextView>(R.id.locA4).setBackgroundResource( R.drawable.red ) }
         if (loc == "b4")  { findViewById<TextView>(R.id.locB4).setBackgroundResource( R.drawable.red ) }
-        if (loc == "a5")  { findViewById<TextView>(R.id.locA5).setBackgroundResource( R.drawable.red ) }
-        if (loc == "b5")  { findViewById<TextView>(R.id.locB5).setBackgroundResource( R.drawable.red ) }
+        if (loc == "c4")  { findViewById<TextView>(R.id.locC4).setBackgroundResource( R.drawable.red ) }
+        if (loc == "d4")  { findViewById<TextView>(R.id.locD4).setBackgroundResource( R.drawable.red ) }
+        if (loc == "e4")  { findViewById<TextView>(R.id.locE4).setBackgroundResource( R.drawable.red ) }
     }
 
+    fun getEanRemoveDuplicates(ean: String): String {
+        var res = ean;
+        if       (ean == "XA2667421252I0 Y") { res = "3561292290977" } // google pixel 3XL
+        //else if  (ean == "3561292290885")    { res = "3561292290977" }
+        //else if  (ean == "3561292290885")    { res = "3561292290977" }
+        return res
+    }
+
+    fun setEanImage(ean: String) {
+        val iv: ImageView = findViewById<ImageView>(R.id.imageView)
+        if      (ean == "8076809574631") { iv.setImageResource(R.drawable._8076809574631) }
+        else if (ean == "9782290215715") { iv.setImageResource(R.drawable._9782290215715) }
+        else if (ean == "3178530402988") { iv.setImageResource(R.drawable._3178530402988) }
+        else if (ean == "3596710469079") { iv.setImageResource(R.drawable._3596710469079) }
+        else if (ean == "3564707000086") { iv.setImageResource(R.drawable._3564707000086) }
+        else if (ean == "3606323172737") { iv.setImageResource(R.drawable._3606323172737) }
+        else if (ean == "7622210368997") { iv.setImageResource(R.drawable._7622210368997) }
+        else if (ean == "8722700027775") { iv.setImageResource(R.drawable._8722700027775) }
+        else if (ean == "3564700002872") { iv.setImageResource(R.drawable._3564700002872) }
+        else if (ean == "3564707079884") { iv.setImageResource(R.drawable._3564707079884) }
+        else if (ean == "8000320414855") { iv.setImageResource(R.drawable._8000320414855) }
+        else if (ean == "3564700755358") { iv.setImageResource(R.drawable._3564700755358) }
+        else if (ean == "3564700863305") { iv.setImageResource(R.drawable._3564700863305) }
+        else if (ean == "26045795")      { iv.setImageResource(R.drawable._26045795) }
+        else if (ean == "3564700001165") { iv.setImageResource(R.drawable._3564700001165) }
+        else if (ean == "3068320063003") { iv.setImageResource(R.drawable._3068320063003) }
+        else if (ean == "3038350013804") { iv.setImageResource(R.drawable._3038350013804) }
+        else if (ean == "3596710379194") { iv.setImageResource(R.drawable._3596710379194) }
+        else if (ean == "4002359006715") { iv.setImageResource(R.drawable._4002359006715) }
+        else if (ean == "8076808140325") { iv.setImageResource(R.drawable._8076808140325) }
+        else if (ean == "3275760000257") { iv.setImageResource(R.drawable._3275760000257) }
+        else if (ean == "3157623295454") { iv.setImageResource(R.drawable._3157623295454) }
+        else if (ean == "3259190368095") { iv.setImageResource(R.drawable._3259190368095) }
+        else if (ean == "5053083145705") { iv.setImageResource(R.drawable._5053083145705) }
+        else if (ean == "3606320000170") { iv.setImageResource(R.drawable._3606320000170) }
+        else if (ean == "3344428058166") { iv.setImageResource(R.drawable._3344428058166) }
+        else if (ean == "3606323144239") { iv.setImageResource(R.drawable._3606323144239) }
+        else if (ean == "3344428060909") { iv.setImageResource(R.drawable._3344428060909) }
+        else if (ean == "8717418170936") { iv.setImageResource(R.drawable._8717418170936) }
+        else if (ean == "9782016253373") { iv.setImageResource(R.drawable._9782016253373) }
+        else if (ean == "9782012708808") { iv.setImageResource(R.drawable._9782012708808) }
+        else if (ean == "9782014005196") { iv.setImageResource(R.drawable._9782014005196) }
+        else if (ean == "9782016253076") { iv.setImageResource(R.drawable._9782016253076) }
+        else if (ean == "9782016253052") { iv.setImageResource(R.drawable._9782016253052) }
+
+        // smartphones
+        else if (ean == "888462061124") { iv.setImageResource(R.drawable._888462061124) }
+        else if (ean == "190198745606") { iv.setImageResource(R.drawable._190198745606) }
+        else if (ean == "3561292290977") { iv.setImageResource(R.drawable._3561292290977) }
+        else if (ean == "3561292290885") { iv.setImageResource(R.drawable._3561292290885) }
+        else if (ean == "888462065740") { iv.setImageResource(R.drawable._888462065740) }
+        else if (ean == "190198482570") { iv.setImageResource(R.drawable._190198482570) }
+        else if (ean == "190198482259") { iv.setImageResource(R.drawable._190198482259) }
+        else if (ean == "888462566353") { iv.setImageResource(R.drawable._888462566353) }
+        else if (ean == "888462804578") { iv.setImageResource(R.drawable._888462804578) }
+        else if (ean == "885909783786") { iv.setImageResource(R.drawable._885909783786) }
+        else if (ean == "888462560870") { iv.setImageResource(R.drawable._888462560870) }
+        else if (ean == "888462732918") { iv.setImageResource(R.drawable._888462732918) }
+
+
+        else { iv.setImageResource(R.drawable._unknown) }
+
+    }
 
     fun getDesc(ean: String) : String {
         var res = "unknown"
@@ -456,7 +545,19 @@ class Put2ShelfActivity : AppCompatActivity() {
         else if (ean == "9782014005196") { res= "Obj CRPE - Maths" }
         else if (ean == "9782016253076") { res= "Obj Concours - Annales Français" }
         else if (ean == "9782016253052") { res= "Obj CRPE - Entrainement Français" }
-
+        // smartphones
+        else if (ean == "888462061124") { res= "IPHONE 6 SPACE GRAY 16GB DEMO" }
+        else if (ean == "190198745606") { res= "IPHONE 8 Plus Red, 64MB" }
+        else if (ean == "3561292290977") { res= "Google Pixel 3XL" }
+        else if (ean == "3561292290885") { res= "Google Pixel 3" }
+        else if (ean == "888462065740")  { res= "Apple iPhone 6 Plus Gold 16GB" }
+        else if (ean == "190198482570")  { res= "Apple iPhone 8 Plus Gold 64GB" }
+        else if (ean == "190198482259")  { res= "Apple iPhone 8 Plus Silver 64GB" }
+        else if (ean == "888462566353")  { res= "Apple iPhone 6s Plus Gold 16GB" }
+        else if (ean == "888462804578")  { res= "Apple iPhone SE Rose Gold 16GB" }
+        else if (ean == "885909783786")  { res= "Apple iPhone 5s Space Grey 16GB" }
+        else if (ean == "888462560870")  { res= "Apple iPhone 6s Rose Gold 16GB" }
+        else if (ean == "888462732918")  { res= "Apple iPhone SE Space Grey 16GB" }
 
         return res
     }
